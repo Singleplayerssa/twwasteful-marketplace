@@ -14,8 +14,8 @@ const categories = [
   {name:'Tekstil',en:'Textile & garment',count:'Jelajahi material',symbol:'05'}
 ];
 export default function Home(){
-  const [listings,setListings] = useState([]); const [query,setQuery] = useState(''); const navigate=useNavigate();
-  useEffect(()=>{api('/listings?limit=4').then(r=>setListings(r.listings)).catch(()=>{});},[]);
+  const [listings,setListings] = useState([]); const [apiError,setApiError] = useState(''); const [query,setQuery] = useState(''); const navigate=useNavigate();
+  useEffect(()=>{api('/listings?limit=4').then(r=>setListings(Array.isArray(r.listings)?r.listings:[])).catch(e=>setApiError(e.message));},[]);
   function search(e){e.preventDefault();navigate(`/marketplace${query?`?q=${encodeURIComponent(query)}`:''}`);}
   return <><Navbar/>
     <main>
@@ -41,7 +41,7 @@ export default function Home(){
       </div></section>
 
       <section className="section listings-section"><div className="page-container"><div className="section-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>AVAILABLE ON THE MARKET</div><h2>Material pilihan<br/><em>untuk produksimu.</em></h2></div><Link className="text-link" to="/marketplace">Jelajahi semua listing <ArrowUpRight size={16}/></Link></div>
-        <div className="listing-grid">{listings.length?listings.map(item=><ListingCard item={item} key={item.id}/>):<div className="empty-market"><PackageCheck size={28}/><p>Listing material akan ditampilkan di sini.</p></div>}</div>
+        <div className="listing-grid">{listings.length?listings.map(item=><ListingCard item={item} key={item.id}/>):<div className="empty-market"><PackageCheck size={28}/><p>{apiError || 'Listing material akan ditampilkan di sini.'}</p></div>}</div>
       </div></section>
 
       <section className="how-section" id="how-it-works"><div className="page-container"><div className="how-header"><div><div className="eyebrow eyebrow-light"><span className="eyebrow-line"/>HOW IT WORKS</div><h2>Sederhana untuk<br/><em>dimulai bersama.</em></h2></div><p>Ruang kerja digital yang menghubungkan dua kebutuhan industri: melepas sisa produksi dan menemukan material yang tepat.</p></div>

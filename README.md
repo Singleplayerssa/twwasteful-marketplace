@@ -2,33 +2,30 @@
 
 Marketplace B2B yang menghubungkan perusahaan penghasil sisa produksi dengan perusahaan yang membutuhkan material tersebut sebagai bahan baku atau bahan pendukung produksi.
 
-## Fitur yang tersedia
+## Fitur aplikasi
 
-- Landing page dengan informasi bisnis, kategori material, alur kerja, dan daftar material.
-- Katalog marketplace: pencarian, filter kategori dan lokasi, pengurutan harga.
-- Registrasi akun dengan profil perusahaan (nama, industri, alamat, NIB opsional, kontak) dan peran pembeli / penjual / keduanya.
+- Landing page, katalog, pencarian, filter kategori/lokasi, dan pengurutan harga.
+- Registrasi akun perusahaan dengan peran pembeli, penjual, atau keduanya.
 - Login dengan sesi cookie `HttpOnly`.
-- Listing penjualan: spesifikasi, volume, minimum pembelian, harga per kg, lokasi pickup, kondisi material, foto, serta konfirmasi wajib bahwa material merupakan non-B3.
-- Penawaran B2B: pembeli mengirim volume dan harga tawaran; penjual menerima atau menolak.
-- Pesanan: dibuat otomatis ketika penjual menerima penawaran.
-- Tahap pembayaran: pembeli mengirim referensi transfer; penjual meninjau dan mengonfirmasi penerimaan dana.
-- Tahap logistik: penjual mengisi jadwal pengambilan; pembeli mengonfirmasi material diterima.
-- Dashboard perusahaan, notifikasi, arsip listing, dan status verifikasi perusahaan.
-- Endpoint admin untuk meninjau verifikasi perusahaan.
-- Data contoh (Karawang dan Bekasi) otomatis dimasukkan ke database pertama kali. Nama perusahaan dan harga contoh merupakan data simulasi untuk demonstrasi, bukan penawaran pasar aktif.
+- Listing material non-B3 dengan spesifikasi, volume, minimum pembelian, harga per kg, lokasi, kondisi, serta foto.
+- Penawaran B2B: pembeli mengajukan jumlah dan harga; penjual menerima atau menolak.
+- Pesanan dibuat saat penjual menyetujui penawaran.
+- Tahapan pesanan: menunggu pembayaran, tinjauan pembayaran, pembayaran dikonfirmasi, jadwal pengambilan, selesai, atau dibatalkan.
+- Dashboard perusahaan, notifikasi, arsip listing, dan verifikasi perusahaan oleh admin.
 
 ## Teknologi
 
-**Frontend:** React, Vite, Tailwind CSS, CSS responsif, React Router, Lucide icons.
+**Frontend:** React, Vite, Tailwind CSS, React Router, Lucide icons, CSS responsif.
 
-**Backend:** Node.js, Express, SQLite (`better-sqlite3`), bcrypt, JWT cookie, Zod validation, Helmet, Express Rate Limit, Multer.
+**Backend:** Node.js 20+, Express, PostgreSQL (`pg`), Supabase Storage, bcrypt, JWT cookie, Zod, Helmet, Express Rate Limit, Multer.
 
-## Menjalankan di komputer lokal
+**Hosting yang disiapkan:** Vercel untuk frontend, Render untuk Express API, Supabase untuk PostgreSQL dan file storage.
+
+## Menjalankan lokal
 
 Persyaratan: Node.js 20 atau lebih baru dan npm.
 
-1. Buka folder project ini di terminal.
-2. Instal dependency root dan aplikasi:
+1. Instal dependency:
 
    ```bash
    npm install
@@ -36,100 +33,67 @@ Persyaratan: Node.js 20 atau lebih baru dan npm.
    npm --prefix server install
    ```
 
-3. Buat file environment:
+2. Buat file environment backend:
 
-   ```bash
-   cp server/.env.example server/.env
-   ```
-
-   Pada Windows PowerShell:
+   PowerShell:
 
    ```powershell
    Copy-Item server/.env.example server/.env
    ```
 
-4. Ubah `JWT_SECRET` pada `server/.env` menjadi string acak yang panjang. Untuk membuat akun admin, isi `ADMIN_EMAIL` dan `ADMIN_PASSWORD` dengan kredensial milikmu sendiri. Jangan gunakan password contoh untuk deployment.
-5. Jalankan frontend dan backend:
+3. Isi `server/.env` dengan connection string Supabase Session Pooler, URL project, Supabase Secret Key (server-only), dan `JWT_SECRET`. Jangan commit file `.env` dan jangan masukkan Secret Key ke frontend.
+4. Pastikan enam tabel PostgreSQL sudah dibuat di schema `public` dan bucket Storage `twwasteful-materials` sudah dibuat.
+5. Jalankan:
 
    ```bash
    npm run dev
    ```
 
-6. Buka alamat Vite yang tampil di terminal, biasanya `http://localhost:5173`.
+6. Buka `http://localhost:5173`. API lokal berjalan di `http://localhost:4000` melalui proxy Vite.
 
-API berjalan di `http://localhost:4000`. Vite meneruskan `/api` dan `/uploads` ke backend. SQLite akan dibuat otomatis di `server/data/twwasteful.db`.
+Database tidak diisi akun atau listing demo secara otomatis. Daftarkan akun perusahaan pertama melalui `/register`, lalu buat listing untuk mengisi katalog. Gunakan akun/perusahaan uji yang berbeda untuk menguji alur pembeli dan penjual.
 
-## Cara mencoba alur marketplace
+## Alur marketplace
 
-1. Buka marketplace. Listing contoh dapat dilihat tanpa login.
-2. Daftarkan akun perusahaan baru dan pilih peran **Keduanya** untuk mencoba sisi pembeli sekaligus penjual.
-3. Untuk mencoba menjual, buka **Jual material**, isi spesifikasi, jumlah, minimum order, harga/kg dan lokasi.
-4. Untuk menguji penawaran lintas perusahaan, buat akun kedua di browser incognito atau browser lain. Masuk sebagai pembeli, pilih listing akun pertama, lalu kirim penawaran.
-5. Kembali ke akun penjual, buka Dashboard → Penawaran, lalu terima penawaran. Pesanan otomatis dibuat.
-6. Pembeli mengisi referensi transfer pada Dashboard → Pesanan. Penjual memeriksa mutasi pada kanal pembayaran perusahaannya, kemudian mengonfirmasi pembayaran di dashboard.
-7. Penjual menetapkan jadwal pengambilan. Setelah material diterima, pembeli mengonfirmasi pesanan selesai.
+1. Perusahaan mendaftar sebagai pembeli, penjual, atau keduanya.
+2. Penjual membuat listing dengan data material dan mengonfirmasi bahwa material non-B3.
+3. Pembeli mencari material dan mengajukan penawaran jumlah serta harga.
+4. Penjual menerima atau menolak penawaran.
+5. Jika diterima, sistem membuat pesanan dan menahan listing.
+6. Pembeli mengirim referensi pembayaran. Penjual memeriksa pembayaran melalui kanal resmi perusahaannya dan mengonfirmasi secara manual.
+7. Penjual menjadwalkan pengambilan. Pembeli mengonfirmasi bahwa material sudah diterima.
+
+Pembayaran belum terhubung ke bank/payment gateway dan logistik belum terhubung ke penyedia ekspedisi. Konfirmasi referensi pembayaran adalah proses manual.
 
 ## Struktur folder
 
 ```text
 twwasteful-marketplace/
-├── client/
-│   ├── index.html
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── src/
-│       ├── components/       # Navbar, brand, material visual, listing card, footer
-│       ├── pages/            # Landing, marketplace, auth, detail, sell, dashboard
-│       ├── api.js            # API helper dan format harga
-│       ├── AuthContext.jsx   # Session state
-│       ├── App.jsx
-│       └── styles.css
-└── server/
-    ├── src/
-    │   ├── routes/           # auth, listings, offers, orders, dashboard, admin
-│   │   ├── db.js             # SQLite schema, seed, notification helper
-│   │   ├── middleware.js     # auth dan role guard
-│   │   └── index.js          # Express server
-│   ├── uploads/
+├── client/                  # React + Vite frontend
+│   ├── src/components/
+│   ├── src/pages/
+│   ├── src/api.js
+│   └── vercel.json           # SPA fallback + API rewrite setelah URL Render tersedia
+├── server/                  # Express API
+│   ├── src/routes/
+│   ├── src/db.js             # PostgreSQL pool dan transaction helper
+│   ├── src/storage.js        # Upload foto ke Supabase Storage
+│   ├── src/middleware.js
 │   └── .env.example
+├── docs/SYSTEM-FLOW.md
+├── DEPLOY-POSTGRES.md
+└── render.yaml
 ```
-
-## Desain alur bisnis
-
-Lihat [`docs/SYSTEM-FLOW.md`](docs/SYSTEM-FLOW.md) untuk diagram alur transaksi, hak akses setiap peran, prinsip harga dan stok, serta batas versi MVP.
-
-## Ringkasan endpoint API
-
-| Method | Endpoint | Fungsi |
-|---|---|---|
-| POST | `/api/auth/register` | Daftar akun dan perusahaan |
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/logout` | Logout |
-| GET | `/api/auth/me` | Profil sesi aktif |
-| GET | `/api/listings` | Katalog dengan filter `q`, `category`, `city`, `sort` |
-| GET | `/api/listings/:id` | Detail listing |
-| GET | `/api/listings/mine` | Listing perusahaan sendiri |
-| POST | `/api/listings` | Buat listing, multipart/form-data |
-| PATCH | `/api/listings/:id` | Arsip/aktifkan listing |
-| GET / POST | `/api/offers` | Lihat dan buat penawaran |
-| POST | `/api/offers/:id/respond` | Terima/tolak penawaran |
-| GET | `/api/orders` | Daftar pesanan perusahaan |
-| POST | `/api/orders/:id/payment` | Kirim referensi pembayaran |
-| POST | `/api/orders/:id/action` | Konfirmasi pembayaran, jadwalkan pickup, selesaikan atau batalkan |
-| GET | `/api/dashboard` | Statistik dan notifikasi |
-| GET | `/api/admin/companies` | Daftar perusahaan untuk admin |
-| POST | `/api/admin/companies/:id/verify` | Ubah status verifikasi |
-
-## Catatan operasional penting
-
-Versi ini adalah **MVP operasional untuk demonstrasi dan pengembangan lanjutan**, bukan layanan pembayaran/logistik yang telah terhubung ke pihak ketiga. Konfirmasi pembayaran hanya menyimpan referensi yang dikirim pembeli; penjual tetap wajib memeriksa dana pada kanal resmi mereka. Jadwal pickup disepakati langsung antarperusahaan. Untuk produksi, integrasikan payment gateway resmi, proses sengketa, audit log, layanan logistik, backup database, monitoring, dan kebijakan privasi.
-
-Tahap awal sebaiknya hanya menerima material **non-B3**. Platform ini belum memverifikasi klasifikasi, izin, atau dokumen pengangkutan limbah; perusahaan wajib memastikan material dan aktivitasnya sesuai ketentuan lingkungan hidup dan perizinan yang berlaku sebelum transaksi.
 
 ## Deployment
 
-- Build frontend: `npm run build`.
-- Atur `NODE_ENV=production`, `JWT_SECRET` yang kuat, `PORT`, `ADMIN_EMAIL` (opsional) dan `ADMIN_PASSWORD` (opsional) di environment hosting.
-- Jalankan `npm start` dari root project.
-- Express menyajikan `client/dist` serta API pada origin yang sama.
-- Gunakan persistent disk untuk `server/data` dan `server/uploads`. Atur HTTPS pada hosting agar cookie sesi memakai atribut `Secure`.
+Ikuti [`DEPLOY-POSTGRES.md`](DEPLOY-POSTGRES.md) untuk menghubungkan Supabase, membuat Storage bucket, deploy backend di Render, lalu menambahkan external rewrite Vercel ke URL Render.
+
+## Keamanan dan batas MVP
+
+- `DATABASE_URL`, `JWT_SECRET`, dan `SUPABASE_SECRET_KEY` hanya disimpan di environment backend (Render atau `server/.env` lokal).
+- Tabel database memakai RLS. Backend memakai koneksi Postgres server-side dan memeriksa autentikasi serta hak akses di Express. Jangan membuat policy `anon` atau `authenticated` yang memberikan akses luas.
+- Bucket foto material bersifat public agar foto listing dapat dilihat di katalog; upload hanya dilakukan server melalui Secret Key.
+- API memvalidasi input, membatasi percobaan login, menggunakan password hash, cookie `HttpOnly`, dan membatasi unggahan gambar ke JPG/PNG/WEBP maksimal 5 MB.
+- Tahap awal dibatasi ke material non-B3. Perusahaan harus memastikan klasifikasi material, izin, dan dokumen pengelolaan/pengangkutan sesuai aturan sebelum transaksi.
+- Ini masih MVP untuk demonstrasi dan pengembangan. Sebelum penggunaan komersial perlu pengujian keamanan, backup, audit log, monitoring, proses sengketa, kebijakan privasi, payment gateway, dan koordinasi logistik resmi.

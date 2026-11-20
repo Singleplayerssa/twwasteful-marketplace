@@ -1,20 +1,32 @@
 import jwt from 'jsonwebtoken';
-import db from './db.js';
+import { query } from './db.js';
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const token = req.cookies?.tw_session;
   if (!token) return res.status(401).json({ error: 'Silakan masuk terlebih dahulu.' });
+
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = db.prepare(`SELECT u.id,u.name,u.email,u.role,u.company_id,
-      c.name AS company_name,c.industry,c.city,c.verification_status
-      FROM users u LEFT JOIN companies c ON c.id=u.company_id WHERE u.id=?`).get(payload.id);
-    if (!user) return res.status(401).json({ error: 'Sesi tidak valid.' });
-    req.user = user;
-    next();
-  } catch {
-    res.clearCookie('tw_session');
-    return res.status(401).json({ error: 'Sesi berakhir. Silakan masuk kembali.' });
+    const result = await query(
+      `SELECT u.id, u.name, u.email, u.role, u.company_id,
+              c.name AS company_name, c.industry, c.city, c.verification_status
+       FROM public.users u
+       LEFT JOIN public.companies c ON c.id = u.company_id
+       WHERE u.id = $1`,
+      [payload.id]
+    );
+    if (!result.rows[0]) {
+      res.clearCookie('tw_session', { httpOnly: true, sameSite: 'lax', secure: true, path: '/' });
+      return res.status(401).json({ error: 'Sesi tidak valid. Silakan masuk kembali.' });
+    }
+    req.user = result.rows[0];
+    return next();
+  } catch (error) {
+    if (error?.name === 'JsonWebTokenError' || error?.name === 'TokenExpiredError') {
+      res.clearCookie('tw_session', { httpOnly: true, sameSite: 'lax', secure: true, path: '/' });
+      return res.status(401).json({ error: 'Sesi berakhir. Silakan masuk kembali.' });
+    }
+    return next(error);
   }
 }
 
@@ -23,6 +35,6 @@ export function allowRoles(...roles) {
     if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Akses tidak diizinkan untuk akun ini.' });
     }
-    next();
+    return next();
   };
 }

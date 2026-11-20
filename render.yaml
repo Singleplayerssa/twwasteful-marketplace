@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: twwasteful-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: NODE_ENV
+        value: production
+      - key: PGSSL
+        value: "true"
+      - key: PG_POOL_MAX
+        value: "5"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: twwasteful-materials
