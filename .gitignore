@@ -7,4 +7,5 @@ server/data/
 server/uploads/*
 !server/uploads/.gitkeep
 client/dist/
+client/public/
 .DS_Store
