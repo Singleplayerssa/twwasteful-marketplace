@@ -9,3 +9,4 @@ server/uploads/*
 client/dist/
 client/public/
 .DS_Store
+client/.env
